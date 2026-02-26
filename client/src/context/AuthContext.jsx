@@ -41,13 +41,37 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
+  const forgotPasswordSendOtp = async (email) => {
+    return authService.forgotPasswordSendOtp(email);
+  };
+
+  const forgotPasswordVerifyOtp = async (email, otp) => {
+    return authService.forgotPasswordVerifyOtp(email, otp);
+  };
+
+  const forgotPasswordReset = async (email, otp, newPassword) => {
+    return authService.forgotPasswordReset(email, otp, newPassword);
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, googleLogin, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        register,
+        login,
+        googleLogin,
+        forgotPasswordSendOtp,
+        forgotPasswordVerifyOtp,
+        forgotPasswordReset,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -15,19 +15,22 @@ export const getAllDesigns = async (filters = {}) => {
   const query = {};
 
   if (filters.style) query.style = filters.style;
-  if (filters.maxBudget) query.budgetMax = { $lte: filters.maxBudget };
-  if (filters.minBudget) query.budgetMin = { $gte: filters.minBudget };
+  if (filters.bhk) query.bhk = filters.bhk;
+  if (filters.maxBudget) query.budgetMax = { $lte: Number(filters.maxBudget) };
+  if (filters.minBudget) query.budgetMin = { $gte: Number(filters.minBudget) };
   if (filters.vastuCompliant !== undefined) query.vastuCompliant = filters.vastuCompliant;
 
-  return await HomeDesign.find(query).populate('architectId', 'name email');
+  return await HomeDesign.find(query)
+    .populate('architectId', 'name email phone')
+    .sort({ createdAt: -1 });
 };
 
 export const getDesignById = async (id) => {
-  return await HomeDesign.findById(id).populate('architectId', 'name email');
+  return await HomeDesign.findById(id).populate('architectId', 'name email phone');
 };
 
 export const updateDesign = async (id, updates) => {
-  return await HomeDesign.findByIdAndUpdate(id, updates, { new: true });
+  return await HomeDesign.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
 };
 
 export const deleteDesign = async (id) => {
@@ -35,5 +38,5 @@ export const deleteDesign = async (id) => {
 };
 
 export const getArchitectDesigns = async (architectId) => {
-  return await HomeDesign.find({ architectId });
+  return await HomeDesign.find({ architectId }).sort({ createdAt: -1 });
 };

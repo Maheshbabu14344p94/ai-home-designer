@@ -62,6 +62,45 @@ export const googleLoginUser = async (profile) => {
   }
 };
 
+export const forgotPasswordSendOtp = async (email) => {
+  try {
+    const response = await API.post('/auth/forgot-password/send-otp', {
+      email: email.trim(),
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to send OTP';
+    throw new Error(errorMessage);
+  }
+};
+
+export const forgotPasswordVerifyOtp = async (email, otp) => {
+  try {
+    const response = await API.post('/auth/forgot-password/verify-otp', {
+      email: email.trim(),
+      otp: String(otp).trim(),
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || 'OTP verification failed';
+    throw new Error(errorMessage);
+  }
+};
+
+export const forgotPasswordReset = async (email, otp, newPassword) => {
+  try {
+    const response = await API.post('/auth/forgot-password/reset', {
+      email: email.trim(),
+      otp: String(otp).trim(),
+      newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || 'Password reset failed';
+    throw new Error(errorMessage);
+  }
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');

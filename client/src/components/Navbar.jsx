@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, LineChart } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
@@ -37,7 +37,8 @@ export default function Navbar() {
           {/* Desktop */}
           <div className="hidden md:flex items-center gap-10">
             <NavLink to="/">Home</NavLink>
-
+            <NavLink to="/home-trends">Trends</NavLink>
+            <NavLink to="/architects-info">Architects</NavLink>
             {user?.role && (
               <NavLink
                 to={
@@ -87,6 +88,13 @@ export default function Navbar() {
           <div className="space-y-6 border-t bg-white/90 px-6 py-8 backdrop-blur">
             <MobileLink to="/" onClick={() => setMenuOpen(false)}>
               Home
+            </MobileLink>
+
+            <MobileLink to="/home-trends" onClick={() => setMenuOpen(false)}>
+              <span className="inline-flex items-center gap-2">
+                <LineChart size={18} />
+                Trends
+              </span>
             </MobileLink>
 
             {user && (

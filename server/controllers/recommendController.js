@@ -1,22 +1,88 @@
 import { recommendDesigns } from '../services/recommendationEngine.js';
 import ChatLog from '../models/ChatLog.js';
 
+const allowedStyles = ['Modern', 'Traditional', 'Contemporary', 'Minimalist', 'Rustic', 'Colonial'];
+const allowedVastu = ['none', 'flexible', 'strict'];
+const allowedBhk = ['1BHK', '2BHK', '3BHK', '4BHK', '5BHK'];
+
+const toNumber = (v) => (v === '' || v === null || v === undefined ? NaN : Number(v));
+const toBool = (v) => v === true || v === 'true';
+
 export const getRecommendations = async (req, res, next) => {
   try {
-    const { landSize, budgetMin, budgetMax, floors, style, vastuPreference } = req.body;
+    const {
+      landSize,
+      budgetMin,
+      budgetMax,
+      floors,
+      style,
+      bhk,
+      vastuPreference,
+      location,
+      soilTestStructuralDesign,
+      highGradeSteelCement,
+      superiorWaterproofing,
+      doubleGlazedWindowsInsulation,
+      extraElectricalConduitsDataCabling,
+      properDrainageSystem,
+    } = req.body;
 
-    // Validate inputs
-    if (!landSize || !budgetMin || !budgetMax) {
-      return res.status(400).json({ success: false, message: 'Please provide all required fields' });
+    const landSizeNum = toNumber(landSize);
+    const budgetMinNum = toNumber(budgetMin);
+    const budgetMaxNum = toNumber(budgetMax);
+    const floorsNum = floors === '' || floors === null || floors === undefined ? null : toNumber(floors);
+
+    // Required numeric validation
+    if (Number.isNaN(landSizeNum) || Number.isNaN(budgetMinNum) || Number.isNaN(budgetMaxNum)) {
+      return res.status(400).json({
+        success: false,
+        message: 'landSize, budgetMin and budgetMax are required and must be valid numbers',
+      });
+    }
+
+    if (landSizeNum <= 400) {
+      return res.status(400).json({ success: false, message: 'Land size must be greater than 400 sq.ft' });
+    }
+
+    if (budgetMinNum < 500000) {
+      return res.status(400).json({ success: false, message: 'Minimum budget must be at least 500000' });
+    }
+
+    if (budgetMaxNum < budgetMinNum) {
+      return res.status(400).json({ success: false, message: 'Maximum budget must be >= minimum budget' });
+    }
+
+    if (floorsNum !== null && (Number.isNaN(floorsNum) || floorsNum < 1)) {
+      return res.status(400).json({ success: false, message: 'Floors must be at least 1' });
+    }
+
+    if (style && !allowedStyles.includes(style)) {
+      return res.status(400).json({ success: false, message: 'Invalid style value' });
+    }
+
+    if (vastuPreference && !allowedVastu.includes(vastuPreference)) {
+      return res.status(400).json({ success: false, message: 'Invalid vastuPreference value' });
+    }
+
+    if (bhk && !allowedBhk.includes(bhk)) {
+      return res.status(400).json({ success: false, message: 'Invalid BHK value' });
     }
 
     const recommendations = await recommendDesigns({
-      landSize: parseInt(landSize),
-      budgetMin: parseInt(budgetMin),
-      budgetMax: parseInt(budgetMax),
-      floors: parseInt(floors) || null,
+      landSize: landSizeNum,
+      budgetMin: budgetMinNum,
+      budgetMax: budgetMaxNum,
+      floors: floorsNum,
       style,
-      vastuPreference,
+      bhk,
+      vastuPreference: vastuPreference || 'flexible',
+      location: location || '',
+      soilTestStructuralDesign: toBool(soilTestStructuralDesign),
+      highGradeSteelCement: toBool(highGradeSteelCement),
+      superiorWaterproofing: toBool(superiorWaterproofing),
+      doubleGlazedWindowsInsulation: toBool(doubleGlazedWindowsInsulation),
+      extraElectricalConduitsDataCabling: toBool(extraElectricalConduitsDataCabling),
+      properDrainageSystem: toBool(properDrainageSystem),
     });
 
     res.status(200).json({ success: true, recommendations });
@@ -39,23 +105,32 @@ export const chatbotQuery = async (req, res, next) => {
     let category = 'general';
 
     if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('budget')) {
-      response = 'Our designs range from ₹15 Lakhs to ₹1 Crore. You can set your budget range while searching for recommendations!';
+      response =
+        'Our designs range from ₹15 Lakhs to ₹1 Crore. You can set your budget range while searching for recommendations!';
       category = 'price';
     } else if (lowerMessage.includes('vastu')) {
-      response = 'Yes, we prioritize Vastu-compliant designs. Many of our architects follow Vastu principles. You can filter for Vastu-compliant homes in your search!';
+      response =
+        'Yes, we prioritize Vastu-compliant designs. Many of our architects follow Vastu principles. You can filter for Vastu-compliant homes in your search!';
       category = 'vastu';
-    } else if (lowerMessage.includes('design') || lowerMessage.includes('style') || lowerMessage.includes('modern') || lowerMessage.includes('traditional')) {
-      response = 'We have a wide variety of design styles including Modern, Traditional, Contemporary, Minimalist, Rustic, and Colonial. What style appeals to you?';
+    } else if (
+      lowerMessage.includes('design') ||
+      lowerMessage.includes('style') ||
+      lowerMessage.includes('modern') ||
+      lowerMessage.includes('traditional')
+    ) {
+      response =
+        'We have a wide variety of design styles including Modern, Traditional, Contemporary, Minimalist, Rustic, and Colonial. What style appeals to you?';
       category = 'design';
     } else if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
-      response = 'I can help you with information about our designs, pricing, Vastu compliance, and design styles. Feel free to ask anything!';
+      response =
+        'I can help you with information about our designs, pricing, Vastu compliance, and design styles. Feel free to ask anything!';
       category = 'general';
     } else {
-      response = 'Thank you for your message! Could you provide more details? I can help with questions about pricing, Vastu compliance, design styles, and more.';
+      response =
+        'Thank you for your message! Could you provide more details? I can help with questions about pricing, Vastu compliance, design styles, and more.';
       category = 'other';
     }
 
-    // Save chat log
     const chatLog = new ChatLog({
       userId: req.user?.id || null,
       userMessage: message,
